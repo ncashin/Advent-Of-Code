@@ -1,0 +1,104 @@
+# Untitled notebook
+
+## Section
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.14.2"}
+])
+```
+
+```elixir
+input = Kino.Input.textarea("Please paste your input file")
+```
+
+```elixir
+banks =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n")
+  |> Enum.map(fn bank -> bank |> String.graphemes() |> Enum.map(&String.to_integer(&1)) end)
+
+banks
+|> Enum.map(fn bank ->
+  bankLength = bank |> Enum.count()
+
+  bank
+  |> Enum.reduce([0, 0, 0], fn value, [firstDigit, secondDigit, index] ->
+    if value > firstDigit && index + 1 != bankLength do
+      [value, 0, index + 1]
+    else
+      if value > secondDigit do
+        [firstDigit, value, index + 1]
+      else
+        [firstDigit, secondDigit, index + 1]
+      end
+    end
+    end) |> Enum.take(2) |> Enum.map(&Integer.to_string(&1)) |> List.to_string() |> String.to_integer()
+  end
+
+)|> Enum.sum()
+```
+
+```elixir
+banks =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn bank -> bank |> String.graphemes() |> Enum.map(&String.to_integer(&1)) end)
+
+maxBatteries = 12
+
+banks
+|> Enum.map(fn bank ->
+  bankLength = length(bank)
+
+  {digits, _} =
+    Enum.reduce(bank, {[], 0}, fn value, {digitArray, bankIndex} ->
+      remaining = bankLength - bankIndex
+
+      digitArray =
+        Stream.cycle([:pop])
+        |> Enum.reduce_while(digitArray, fn _, acc ->
+          case acc do
+            [] ->
+              {:halt, acc}
+
+            _ ->
+              last = List.last(acc)
+              can_pop = (length(acc) - 1 + remaining) >= maxBatteries
+
+              if last < value and can_pop do
+                {:cont, List.delete_at(acc, -1)}
+              else
+                {:halt, acc}
+              end
+          end
+        end)
+
+      digitArray =
+        if length(digitArray) < maxBatteries do
+          digitArray ++ [value]
+        else
+          digitArray
+        end
+
+      {digitArray, bankIndex + 1}
+    end)
+
+  digits
+  |> Enum.map(&Integer.to_string/1)
+  |> Enum.join()
+  |> String.to_integer()
+end)
+|> Enum.sum()
+```
+
+163930630884583 to low
+
+16430630884583
+
+163930630884583
+171419245422055
+
+16430630884583 to low

@@ -1,0 +1,67 @@
+# Untitled notebook
+
+## Section
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.14.2"}
+])
+```
+
+```elixir
+input = Kino.Input.textarea("Please paste your input file")
+```
+
+```elixir
+ranges =
+  input
+  |> Kino.Input.read()
+  |> String.split(",")
+  |> Enum.map(fn pair -> pair |> String.split("-") |> Enum.map(&String.to_integer/1) end)
+
+ranges
+|> Enum.reduce([], fn [rangeStart, rangeEnd], acc ->
+  invalidIds =
+    Enum.filter(rangeStart..rangeEnd, fn value ->
+      idString = value |> Integer.to_string()
+
+      {l, r} = String.split_at(idString, idString |> String.length() |> Integer.floor_div(2))
+      l == r
+    end)
+
+  acc ++ invalidIds
+end)
+|> Enum.sum()
+```
+
+```elixir
+ranges =
+  input
+  |> Kino.Input.read()
+  |> String.split(",")
+  |> Enum.map(fn pair -> pair |> String.split("-") |> Enum.map(&String.to_integer/1) end)
+
+ranges
+|> Enum.reduce([], fn [rangeStart, rangeEnd], acc ->
+  invalidIds =
+    Enum.filter(rangeStart..rangeEnd, fn value ->
+      idString = value |> Integer.to_string()
+      idLength = String.length(idString)
+
+      1..Integer.floor_div(idLength, 2)
+      |> Enum.find_value(fn value ->
+        if value == 0 || Kernel.rem(idLength, value) != 0 || idLength < 2 do
+          false
+        else
+          test = idString |> String.graphemes() |> Enum.chunk_every(value)
+          !(test |> Enum.find_value(fn x -> x != List.first(test) end))
+        end
+      end)
+    end)
+
+  acc ++ invalidIds
+end)
+|> Enum.sum()
+```
+
+15704845955 is high
