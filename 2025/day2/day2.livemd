@@ -63,5 +63,3 @@ ranges
 end)
 |> Enum.sum()
 ```
-
-15704845955 is high
