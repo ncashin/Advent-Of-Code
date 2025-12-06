@@ -1,0 +1,76 @@
+# Untitled notebook
+
+## Section
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.14.2"}
+])
+```
+
+```elixir
+input = Kino.Input.textarea("Please paste your input file")
+```
+
+```elixir
+defmodule Main do
+def transpose(rows) do
+  rows
+  |> Enum.zip()
+  |> Enum.map(&Tuple.to_list/1)
+end
+end
+```
+
+```elixir
+problems =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(&String.graphemes/1)
+  |> then(&Enum.zip(&1))
+  |> Enum.map(fn tuple -> tuple |> Tuple.to_list() |> Enum.join() end)
+  |> Enum.chunk_by(fn a -> a |> String.trim() |> String.length() == 0 end)
+  |> Enum.filter(fn a -> a |> Enum.at(0) |> String.trim() |> String.length() != 0 end)
+
+problems
+|> Enum.map(fn problem ->
+  transposed = problem |> Enum.map(&String.graphemes(&1)) |> Main.transpose()
+
+  {operator, number_strings} =
+    transposed |> Enum.map(&(Enum.join(&1) |> String.trim())) |> List.pop_at(-1)
+
+  number_strings
+  |> Enum.map(&String.to_integer(&1))
+  |> Enum.reduce(fn value, acc ->
+    apply(Kernel, operator |> String.to_atom(), [value, acc])
+  end)
+end)
+|> Enum.sum()
+```
+
+```elixir
+problems =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(&String.graphemes/1)
+  |> then(&Enum.zip(&1))
+  |> Enum.map(fn tuple -> tuple |> Tuple.to_list() |> Enum.join() end)
+  |> Enum.chunk_by(fn a -> a |> String.trim() |> String.length() == 0 end)
+  |> Enum.filter(fn a -> a |> Enum.at(0) |> String.trim() |> String.length() != 0 end)
+
+problems
+|> Enum.map(fn problem ->
+  operator =
+    problem |> Enum.at(0) |> String.last()
+
+  problem
+  |> Enum.map(&String.replace(&1, ~r/[^0-9]/, ""))
+  |> Enum.map(&String.to_integer(&1))
+  |> Enum.reduce(fn value, acc ->
+    apply(Kernel, operator |> String.to_atom(), [value, acc])
+  end)
+end)
+|> Enum.sum()
+```

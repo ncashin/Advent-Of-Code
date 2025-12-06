@@ -148,5 +148,45 @@ end)
 ```
 
 ```elixir
+grid =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(&String.trim/1)
+  |> Enum.join("\n")
+  |> Griddy.new_from_string()
+
+
+grid |> Griddy.get_nearby_cells(1, 0) |> IO.inspect() |> Enum.count()
+
+1..30 |> Enum.reduce(do value, reduce -> 
+
+  start_count 
+grid
+|> Griddy.map(fn value, x, y ->
+  if value != "@" do
+  grid
+  |> Griddy.get_nearby_cells(x, y)
+  |> Enum.filter(fn a ->
+    a == "@"
+  end)
+  |> Enum.count()
+  else
+    nil
+  end
+end)
+|> IO.inspect()
+|> Enum.flat_map(fn a -> a end)
+|> Enum.reduce(0, fn value, acc ->
+  
+  if value < 4 do
+    acc + 1
+  else
+    acc
+  end
+end)
+
+end)
+
 
 ```
