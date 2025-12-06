@@ -1,0 +1,77 @@
+# Untitled notebook
+
+## Section
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.14.2"}
+])
+```
+
+```elixir
+input = Kino.Input.textarea("Please paste your input file")
+```
+
+```elixir
+[ranges_string, ids_string] =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n\n", trim: true)
+
+ranges =
+  ranges_string
+  |> String.split("\n", trim: true)
+  |> Enum.map(&(String.split(&1, "-", trim: true) |> Enum.map(fn a -> String.to_integer(a) end)))
+
+ids = ids_string |> String.split("\n", trim: true) |> Enum.map(&String.to_integer(&1))
+```
+
+```elixir
+ids
+|> Enum.filter(fn id ->
+  ranges
+  |> Enum.find(fn [range_start, range_end] ->
+    id <= range_end && id >= range_start
+  end)
+  end) |> Enum.count()
+```
+
+```elixir
+[_, answer] =
+  ranges
+  |> Enum.sort()
+  |> Enum.map(fn [a, b] -> [a - 1, b] end)
+  |> Enum.reduce([nil, 0], fn current, [prior, total_value] ->
+    [current_start, current_end] = current
+
+    if prior == nil do
+      [current, current_end - current_start]
+    else
+      [prior_start, prior_end] = prior
+
+      real_start =
+        if prior_end - current_start > 0 do
+          prior_end
+        else
+          current_start
+        end
+
+      real_end =
+        if prior_end - current_end > 0 do
+          prior_end
+        else
+          current_end
+        end
+
+      real_number_count = real_end - real_start
+
+      if real_number_count > 0 do
+        [current, total_value + real_number_count]
+      else
+        [current, total_value]
+      end
+    end
+  end)
+
+answer
+```
