@@ -14,11 +14,11 @@ input = Kino.Input.textarea("Please paste your input file")
 
 ```elixir
 defmodule Main do
-def transpose(rows) do
-  rows
-  |> Enum.zip()
-  |> Enum.map(&Tuple.to_list/1)
-end
+  def transpose(rows) do
+    rows
+    |> Enum.zip()
+    |> Enum.map(&Tuple.to_list/1)
+  end
 end
 ```
 
