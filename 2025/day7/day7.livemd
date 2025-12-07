@@ -9,6 +9,10 @@ Mix.install([
 ```
 
 ```elixir
+input = Kino.Input.textarea("Please paste your input file")
+```
+
+```elixir
 defmodule Griddy do
   def enum_to_map(enum) do
     Stream.iterate(0, &(&1 + 1)) |> Enum.zip(enum) |> Map.new()
@@ -112,99 +116,112 @@ end
 ```
 
 ```elixir
-input = Kino.Input.textarea("Please paste your input file")
-```
+defmodule Main do
+  def handle_split(grid, x, y, just_split) do
+    value = grid |> Griddy.get(x, y)
 
-```elixir
-grid =
-  input
-  |> Kino.Input.read()
-  |> String.split("\n", trim: true)
-  |> Enum.map(&String.trim/1)
-  |> Enum.join("\n")
-  |> Griddy.new_from_string()
+    case value do
+      nil ->
+        [0, grid]
 
-grid |> Griddy.get_nearby_cells(1, 0) |> IO.inspect() |> Enum.count()
+      "." ->
+        update_grid = grid |> Griddy.put(x, y, "|")
 
-grid
-|> Griddy.map(fn value, x, y ->
-  if value == "@" do
-    grid
-    |> Griddy.get_nearby_cells(x, y)
-    |> Enum.filter(fn a ->
-      a == "@"
-    end)
-    |> Enum.count()
-  else
-    nil
-  end
-end)
-|> IO.inspect()
-|> Enum.flat_map(fn a -> a end)
-|> Enum.reduce(0, fn {key, value}, acc ->
-  if value < 4 do
-    acc + 1
-  else
-    acc
-  end
-end)
-```
-
-```elixir
-grid =
-  input
-  |> Kino.Input.read()
-  |> String.split("\n", trim: true)
-  |> Enum.map(&String.trim/1)
-  |> Enum.join("\n")
-  |> Griddy.new_from_string()
-
-initial =
-  grid
-  |> Griddy.reduce(0, fn value, acc, x, y ->
-    if value == "@" do
-      acc + 1
-    else
-      acc
-    end
-  end)
-
-final_grid =
-  1..200
-  |> Enum.reduce(grid, fn _value, current_grid ->
-    current_grid
-    |> Griddy.map(fn value, x, y ->
-      if value == "@" do
-        count =
-          current_grid
-          |> Griddy.get_nearby_cells(x, y)
-          |> Enum.filter(fn a ->
-            a == "@"
-          end)
-          |> Enum.count()
-
-        if count < 4 do
-          "."
+        if just_split do
+          [value, final_grid] = Main.handle_split(update_grid, x, y + 1, false)
+          [value, final_grid]
         else
-          "@"
+          Main.handle_split(update_grid, x, y + 1, false)
         end
-      else
-        "."
-      end
-    end)
-  end)
-final_grid |> Griddy.to_string() |> IO.inspect()
-final =
-  final_grid
-  |> Griddy.reduce(0, fn value, acc, _x, _y ->
-    if value == "@" do
-      acc + 1
-    else
-      acc
-    end
-  end)
 
-initial - final
+      "^" ->
+        [first_split, update_grid] = Main.handle_split(grid, x + 1, y, true)
+        [second_split, final_grid] = Main.handle_split(update_grid, x - 1, y, true)
+        [first_split + second_split + 1, final_grid]
+
+      "|" ->
+        [0, grid]
+    end
+  end
+end
 ```
 
-to low 8950
+```elixir
+grid =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(&String.trim/1)
+  |> Enum.join("\n")
+  |> Griddy.new_from_string()
+
+{s_x, s_y} = grid |> Griddy.find("S")
+
+[answer, grid] = Main.handle_split(grid, s_x, s_y + 1, false)
+answer
+```
+
+```elixir
+defmodule Test do
+  def handle_quantum_split(grid, x, y, just_split) do
+    {value, grid, _memo} =
+      do_split(grid, x, y, just_split, %{})
+
+    [value, grid]
+  end
+
+  defp do_split(grid, x, y, just_split, memo) do
+    key = {x, y, just_split}
+
+    case memo do
+      %{^key => result} ->
+        result
+
+      _ ->
+        value = Griddy.get(grid, x, y)
+
+        {count, final_grid, memo} =
+          case value do
+            nil ->
+              {1, grid, memo}
+
+            "." ->
+              update_grid = Griddy.put(grid, x, y, "|")
+
+              if just_split do
+                {v, g, memo} = do_split(update_grid, x, y + 1, false, memo)
+                {v, g, memo}
+              else
+                do_split(update_grid, x, y + 1, false, memo)
+              end
+
+            "^" ->
+              {v1, g1, memo} = do_split(grid, x + 1, y, true, memo)
+              {v2, g2, memo} = do_split(g1, x - 1, y, true, memo)
+              {v1 + v2, g2, memo}
+
+            "|" ->
+              do_split(grid, x, y + 1, false, memo)
+          end
+
+        memo = Map.put(memo, key, {count, final_grid, memo})
+        {count, final_grid, memo}
+    end
+  end
+end
+```
+
+```elixir
+grid =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(&String.trim/1)
+  |> Enum.join("\n")
+  |> Griddy.new_from_string()
+
+{s_x, s_y} = grid |> Griddy.find("S")
+
+[answer, grid] = Test.handle_quantum_split(grid, s_x, s_y + 1, false)
+answer
+```
